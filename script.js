@@ -22,7 +22,9 @@ class BankAccount {
       throw new Error("Amount must be greater than 0");
     }
     if (amount > this.balance) {
-      throw new Error("Insufficient funds");
+      throw new Error(
+        `Insufficient funds. Your balance is $${this.balance.toFixed(2)}`,
+      );
     }
     this.balance -= amount;
     this.addTransaction("WITHDRAWAL", amount);
@@ -34,22 +36,33 @@ class BankAccount {
       throw new Error("Amount must be greater than 0");
     }
     if (amount > this.balance) {
-      throw new Error("Insufficient funds for transfer");
+      throw new Error(
+        `Insufficient funds for transfer. Your balance is $${this.balance.toFixed(2)}`,
+      );
     }
+
+    // Perform the transfer
     this.balance -= amount;
     targetAccount.balance += amount;
 
-    this.addTransaction("TRANSFER SENT", amount, targetAccount.accountNumber);
+    // Add transaction records for both accounts
+    this.addTransaction(
+      "TRANSFER SENT",
+      amount,
+      targetAccount.accountNumber,
+      targetAccount.accountHolder,
+    );
     targetAccount.addTransaction(
       "TRANSFER RECEIVED",
       amount,
       this.accountNumber,
+      this.accountHolder,
     );
 
-    return `Successfully transferred $${amount.toFixed(2)} to ${targetAccount.accountHolder}`;
+    return `Successfully transferred $${amount.toFixed(2)} to ${targetAccount.accountHolder} (${targetAccount.accountNumber})`;
   }
 
-  addTransaction(type, amount, relatedAccount = null) {
+  addTransaction(type, amount, relatedAccount = null, relatedHolder = null) {
     const transaction = {
       id: Date.now() + Math.random(),
       type: type,
@@ -61,9 +74,11 @@ class BankAccount {
         minute: "2-digit",
       }),
       relatedAccount: relatedAccount,
+      relatedHolder: relatedHolder,
     };
     this.transactions.unshift(transaction);
 
+    // Keep only last 50 transactions
     if (this.transactions.length > 50) {
       this.transactions.pop();
     }
@@ -92,6 +107,18 @@ class BankingSystem {
       throw new Error("Account holder name is required");
     }
 
+    // Check if account holder already exists (optional)
+    const existingAccount = Array.from(this.accounts.values()).find(
+      (acc) =>
+        acc.accountHolder.toLowerCase() === accountHolder.trim().toLowerCase(),
+    );
+
+    if (existingAccount) {
+      throw new Error(
+        `An account for "${accountHolder}" already exists. Please use a different name.`,
+      );
+    }
+
     const accountNumber = this.generateAccountNumber();
     const newAccount = new BankAccount(
       accountHolder.trim(),
@@ -110,6 +137,12 @@ class BankingSystem {
 
   findAccount(accountNumber) {
     return this.accounts.get(accountNumber);
+  }
+
+  findAccountByName(accountHolder) {
+    return Array.from(this.accounts.values()).find(
+      (acc) => acc.accountHolder.toLowerCase() === accountHolder.toLowerCase(),
+    );
   }
 
   getAllAccounts() {
@@ -272,17 +305,17 @@ function renderTransactions() {
         amountClass = "amount-negative";
         sign = "-";
         borderType = "transaction-transfer-sent";
-        displayType = `Transfer to ${tx.relatedAccount}`;
+        displayType = `Transfer to ${tx.relatedHolder || tx.relatedAccount}`;
       } else if (tx.type === "TRANSFER RECEIVED") {
         amountClass = "amount-positive";
         sign = "+";
         borderType = "transaction-transfer-received";
-        displayType = `Transfer from ${tx.relatedAccount}`;
+        displayType = `Transfer from ${tx.relatedHolder || tx.relatedAccount}`;
       } else if (tx.type === "INITIAL DEPOSIT") {
         displayType = "Initial Deposit";
       }
 
-      const detailText = `${sign} ${formatCurrency(tx.amount)} · ${tx.dateString} ${tx.timeString}`;
+      const detailText = `${tx.dateString} at ${tx.timeString}`;
 
       return `
             <div class="transaction-item ${borderType}">
@@ -307,7 +340,7 @@ function updateAccountSummary() {
             <div class="account-summary-item ${bank.currentAccount && acc.accountNumber === bank.currentAccount.accountNumber ? "active" : ""}" 
                  onclick="switchToAccount('${acc.accountNumber}')">
                 <div class="account-summary-name">${acc.accountHolder}</div>
-                <div class="account-summary-number">****${acc.accountNumber.slice(-4)}</div>
+                <div class="account-summary-number">${acc.accountNumber}</div>
                 <div class="account-summary-balance">${formatCurrency(acc.balance)}</div>
             </div>
         `,
@@ -347,7 +380,21 @@ function openModal(action) {
     modalTitle.innerText = "Send Money";
     transferField.classList.remove("hidden");
     recipientInput.required = true;
-    recipientInput.placeholder = "Enter account number (e.g., SB1234567890)";
+    recipientInput.placeholder =
+      "Enter recipient account number (e.g., SB1234567890)";
+
+    // Show available accounts for transfer
+    const allAccounts = bank.getAllAccounts();
+    const otherAccounts = allAccounts.filter(
+      (acc) => acc.accountNumber !== bank.currentAccount?.accountNumber,
+    );
+
+    if (otherAccounts.length > 0) {
+      showToast(
+        `You have ${otherAccounts.length} other account(s) to transfer to`,
+        "success",
+      );
+    }
   } else if (action === "deposit") {
     modalTitle.innerText = "Add Funds";
     transferField.classList.add("hidden");
@@ -390,15 +437,45 @@ function handleConfirm() {
       refreshUI();
       closeAllModals();
     } else if (activeAction === "transfer") {
-      const recipientNumber = recipientInput.value.trim();
+      const recipientNumber = recipientInput.value.trim().toUpperCase();
+
       if (!recipientNumber) {
         showToast("Please enter recipient account number", "error");
         return;
       }
 
+      // Validate account number format
+      if (!recipientNumber.startsWith("SB")) {
+        showToast(
+          'Invalid account number format. Account numbers start with "SB"',
+          "error",
+        );
+        return;
+      }
+
       const targetAccount = bank.findAccount(recipientNumber);
+
       if (!targetAccount) {
-        showToast("Recipient account not found", "error");
+        // Show available accounts to help the user
+        const allAccounts = bank.getAllAccounts();
+        const otherAccounts = allAccounts.filter(
+          (acc) => acc.accountNumber !== bank.currentAccount?.accountNumber,
+        );
+
+        if (otherAccounts.length > 0) {
+          const accountList = otherAccounts
+            .map((acc) => `${acc.accountHolder} (${acc.accountNumber})`)
+            .join(", ");
+          showToast(
+            `Account not found! Available accounts: ${accountList}`,
+            "error",
+          );
+        } else {
+          showToast(
+            "Account not found! Create another account first to transfer money.",
+            "error",
+          );
+        }
         return;
       }
 
@@ -407,11 +484,15 @@ function handleConfirm() {
         return;
       }
 
-      const result = bank.currentAccount.transfer(amount, targetAccount);
-      showToast(result);
-      bank.saveToStorage();
-      refreshUI();
-      closeAllModals();
+      // Confirm transfer details
+      const confirmMessage = `Confirm transfer of ${formatCurrency(amount)} to ${targetAccount.accountHolder} (${targetAccount.accountNumber})?`;
+      if (confirm(confirmMessage)) {
+        const result = bank.currentAccount.transfer(amount, targetAccount);
+        showToast(result);
+        bank.saveToStorage();
+        refreshUI();
+        closeAllModals();
+      }
     }
   } catch (error) {
     showToast(error.message, "error");
@@ -434,7 +515,7 @@ function handleCreateAccount(e) {
   try {
     const newAccount = bank.createAccount(accountHolder, initialDeposit);
     showToast(
-      `Account created! Account: ${newAccount.accountNumber}`,
+      `Account created successfully! Account Number: ${newAccount.accountNumber}`,
       "success",
     );
     document.getElementById("createAccountForm").reset();
@@ -448,12 +529,12 @@ function handleCreateAccount(e) {
 function handleReset() {
   if (
     confirm(
-      "Reset all transactions and restore default balance? This action cannot be undone.",
+      "⚠️ WARNING: This will reset ALL transactions and restore the default balance ($1,247.89). This action cannot be undone. Are you sure?",
     )
   ) {
     bank.resetCurrentAccount();
     refreshUI();
-    showToast("Account reset to default state", "success");
+    showToast("Account has been reset to default state", "success");
   }
 }
 
@@ -480,6 +561,22 @@ function showSwitchAccountModal() {
     .join("");
 
   switchAccountModal.style.display = "flex";
+}
+
+// ======================== DEMO: Create a second account for testing ========================
+function createDemoAccount() {
+  const allAccounts = bank.getAllAccounts();
+  if (allAccounts.length === 1) {
+    // Create a second account for demo purposes
+    try {
+      const demoAccount = bank.createAccount("Jane Smith", 500.0);
+      console.log("Demo account created:", demoAccount.accountNumber);
+      refreshUI();
+    } catch (error) {
+      // Account might already exist
+      console.log("Demo account already exists or error:", error.message);
+    }
+  }
 }
 
 // ======================== EVENT LISTENERS ========================
@@ -526,4 +623,15 @@ window.switchToAccount = switchToAccount;
 
 // ======================== INITIALIZE ========================
 refreshUI();
-showToast("Welcome to Goldtrust Bank!", "success");
+
+// Create demo account for testing transfers
+setTimeout(() => {
+  createDemoAccount();
+  refreshUI();
+  if (bank.getAllAccounts().length > 1) {
+    showToast(
+      "💡 Tip: You can now transfer money between accounts!",
+      "success",
+    );
+  }
+}, 500);
