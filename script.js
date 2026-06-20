@@ -1,637 +1,432 @@
-// ======================== BANKING SYSTEM CLASSES ========================
-
+/* ======== BANKING SYSTEM ======== */
 class BankAccount {
-  constructor(accountHolder, accountNumber, balance = 0) {
-    this.accountHolder = accountHolder;
-    this.accountNumber = accountNumber;
+  constructor(holder, number, balance = 0) {
+    this.holder = holder;
+    this.number = number;
     this.balance = balance;
-    this.transactions = [];
+    this.txns = [];
   }
 
   deposit(amount) {
-    if (amount <= 0) {
-      throw new Error("Amount must be greater than 0");
-    }
+    if (amount <= 0) throw new Error("Amount must be greater than 0");
     this.balance += amount;
-    this.addTransaction("DEPOSIT", amount);
-    return `Successfully deposited $${amount.toFixed(2)}`;
+    this._add("DEPOSIT", amount);
+    return `Deposited $${amount.toFixed(2)}`;
   }
 
   withdraw(amount) {
-    if (amount <= 0) {
-      throw new Error("Amount must be greater than 0");
-    }
-    if (amount > this.balance) {
-      throw new Error(
-        `Insufficient funds. Your balance is $${this.balance.toFixed(2)}`,
-      );
-    }
+    if (amount <= 0) throw new Error("Amount must be greater than 0");
+    if (amount > this.balance)
+      throw new Error(`Insufficient funds. Balance: $${this.balance.toFixed(2)}`);
     this.balance -= amount;
-    this.addTransaction("WITHDRAWAL", amount);
-    return `Successfully withdrew $${amount.toFixed(2)}`;
+    this._add("WITHDRAWAL", amount);
+    return `Withdrew $${amount.toFixed(2)}`;
   }
 
-  transfer(amount, targetAccount) {
-    if (amount <= 0) {
-      throw new Error("Amount must be greater than 0");
-    }
-    if (amount > this.balance) {
-      throw new Error(
-        `Insufficient funds for transfer. Your balance is $${this.balance.toFixed(2)}`,
-      );
-    }
-
-    // Perform the transfer
+  transfer(amount, target) {
+    if (amount <= 0) throw new Error("Amount must be greater than 0");
+    if (amount > this.balance)
+      throw new Error(`Insufficient funds. Balance: $${this.balance.toFixed(2)}`);
     this.balance -= amount;
-    targetAccount.balance += amount;
-
-    // Add transaction records for both accounts
-    this.addTransaction(
-      "TRANSFER SENT",
-      amount,
-      targetAccount.accountNumber,
-      targetAccount.accountHolder,
-    );
-    targetAccount.addTransaction(
-      "TRANSFER RECEIVED",
-      amount,
-      this.accountNumber,
-      this.accountHolder,
-    );
-
-    return `Successfully transferred $${amount.toFixed(2)} to ${targetAccount.accountHolder} (${targetAccount.accountNumber})`;
+    target.balance += amount;
+    this._add("TRANSFER SENT", amount, target.number, target.holder);
+    target._add("TRANSFER RECEIVED", amount, this.number, this.holder);
+    return `Transferred $${amount.toFixed(2)} to ${target.holder}`;
   }
 
-  addTransaction(type, amount, relatedAccount = null, relatedHolder = null) {
-    const transaction = {
+  _add(type, amount, related, relatedHolder) {
+    const now = new Date();
+    this.txns.unshift({
       id: Date.now() + Math.random(),
-      type: type,
-      amount: amount,
-      date: new Date(),
-      dateString: new Date().toLocaleDateString(),
-      timeString: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      relatedAccount: relatedAccount,
-      relatedHolder: relatedHolder,
-    };
-    this.transactions.unshift(transaction);
-
-    // Keep only last 50 transactions
-    if (this.transactions.length > 50) {
-      this.transactions.pop();
-    }
+      type,
+      amount,
+      date: now.toLocaleDateString(),
+      time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      related,
+      relatedHolder,
+    });
+    if (this.txns.length > 50) this.txns.pop();
   }
 
-  getRecentTransactions(limit = 15) {
-    return this.transactions.slice(0, limit);
+  recent(limit = 15) {
+    return this.txns.slice(0, limit);
   }
 }
 
 class BankingSystem {
   constructor() {
     this.accounts = new Map();
-    this.currentAccount = null;
-    this.loadFromStorage();
+    this.current = null;
+    this._load();
   }
 
-  generateAccountNumber() {
-    const prefix = "SB";
-    const randomNum = Math.floor(Math.random() * 9000000000) + 1000000000;
-    return prefix + randomNum;
+  _genNumber() {
+    return "SB" + (Math.floor(Math.random() * 9e9) + 1e9);
   }
 
-  createAccount(accountHolder, initialDeposit = 0) {
-    if (!accountHolder || accountHolder.trim() === "") {
-      throw new Error("Account holder name is required");
+  create(name, deposit = 0) {
+    if (!name || !name.trim()) throw new Error("Account holder name is required");
+    for (const acc of this.accounts.values()) {
+      if (acc.holder.toLowerCase() === name.trim().toLowerCase())
+        throw new Error(`An account for "${name}" already exists`);
     }
-
-    // Check if account holder already exists (optional)
-    const existingAccount = Array.from(this.accounts.values()).find(
-      (acc) =>
-        acc.accountHolder.toLowerCase() === accountHolder.trim().toLowerCase(),
-    );
-
-    if (existingAccount) {
-      throw new Error(
-        `An account for "${accountHolder}" already exists. Please use a different name.`,
-      );
-    }
-
-    const accountNumber = this.generateAccountNumber();
-    const newAccount = new BankAccount(
-      accountHolder.trim(),
-      accountNumber,
-      initialDeposit,
-    );
-    this.accounts.set(accountNumber, newAccount);
-
-    if (initialDeposit > 0) {
-      newAccount.addTransaction("INITIAL DEPOSIT", initialDeposit);
-    }
-
-    this.saveToStorage();
-    return newAccount;
+    const num = this._genNumber();
+    const acc = new BankAccount(name.trim(), num, deposit);
+    if (deposit > 0) acc._add("INITIAL DEPOSIT", deposit);
+    this.accounts.set(num, acc);
+    this._save();
+    return acc;
   }
 
-  findAccount(accountNumber) {
-    return this.accounts.get(accountNumber);
+  find(num) {
+    return this.accounts.get(num);
   }
 
-  findAccountByName(accountHolder) {
-    return Array.from(this.accounts.values()).find(
-      (acc) => acc.accountHolder.toLowerCase() === accountHolder.toLowerCase(),
-    );
-  }
-
-  getAllAccounts() {
+  all() {
     return Array.from(this.accounts.values());
   }
 
-  switchAccount(accountNumber) {
-    const account = this.findAccount(accountNumber);
-    if (account) {
-      this.currentAccount = account;
-      this.saveToStorage();
+  switchTo(num) {
+    const acc = this.find(num);
+    if (acc) {
+      this.current = acc;
+      this._save();
       return true;
     }
     return false;
   }
 
-  saveToStorage() {
-    const data = {
-      accounts: Array.from(this.accounts.entries()).map(([key, acc]) => ({
-        accountHolder: acc.accountHolder,
-        accountNumber: acc.accountNumber,
-        balance: acc.balance,
-        transactions: acc.transactions,
-      })),
-      currentAccountNumber: this.currentAccount
-        ? this.currentAccount.accountNumber
-        : null,
-    };
-    localStorage.setItem("goldtrustBank", JSON.stringify(data));
+  resetCurrent() {
+    if (!this.current) return false;
+    this.current.balance = 1247.89;
+    this.current.txns = [];
+    this.current._add("INITIAL DEPOSIT", 1247.89);
+    this._save();
+    return true;
   }
 
-  loadFromStorage() {
-    const savedData = localStorage.getItem("goldtrustBank");
-    if (savedData) {
-      const data = JSON.parse(savedData);
-      this.accounts.clear();
+  _save() {
+    const data = {
+      accounts: Array.from(this.accounts.entries()).map(([, a]) => ({
+        holder: a.holder,
+        number: a.number,
+        balance: a.balance,
+        txns: a.txns,
+      })),
+      current: this.current ? this.current.number : null,
+    };
+    localStorage.setItem("quantioBank", JSON.stringify(data));
+  }
 
-      for (const accData of data.accounts) {
-        const account = new BankAccount(
-          accData.accountHolder,
-          accData.accountNumber,
-          accData.balance,
-        );
-        account.transactions = accData.transactions || [];
-        this.accounts.set(accData.accountNumber, account);
-
-        if (accData.accountNumber === data.currentAccountNumber) {
-          this.currentAccount = account;
+  _load() {
+    try {
+      const saved = localStorage.getItem("quantioBank");
+      if (saved) {
+        const data = JSON.parse(saved);
+        for (const d of data.accounts) {
+          const a = new BankAccount(d.holder, d.number, d.balance);
+          a.txns = d.txns || [];
+          this.accounts.set(d.number, a);
+          if (d.number === data.current) this.current = a;
         }
       }
-    }
-
-    // Create default account if no accounts exist
+    } catch (_) {}
     if (this.accounts.size === 0) {
-      const defaultAccount = this.createAccount("John Doe", 1247.89);
-      this.currentAccount = defaultAccount;
-      this.saveToStorage();
+      this.current = this.create("John Doe", 1247.89);
     }
-  }
-
-  resetCurrentAccount() {
-    if (this.currentAccount) {
-      this.currentAccount.balance = 1247.89;
-      this.currentAccount.transactions = [];
-      this.currentAccount.addTransaction("INITIAL DEPOSIT", 1247.89);
-      this.saveToStorage();
-      return true;
-    }
-    return false;
   }
 }
 
-// ======================== INITIALIZE SYSTEM ========================
+/* ======== INIT ======== */
 const bank = new BankingSystem();
 
-// ======================== DOM ELEMENTS ========================
-const balanceDisplay = document.getElementById("balanceDisplay");
-const accountNumberDisplay = document.getElementById("accountNumberDisplay");
-const transactionsList = document.getElementById("transactionsList");
-const welcomeMessage = document.getElementById("welcomeMessage");
-const accountSummaryDiv = document.getElementById("accountSummary");
-const accountsListDiv = document.getElementById("accountsList");
-
-// Buttons
-const depositBtn = document.getElementById("depositBtn");
-const withdrawBtn = document.getElementById("withdrawBtn");
-const transferBtn = document.getElementById("transferBtn");
-const resetBtn = document.getElementById("resetBtn");
-const createAccountBtn = document.getElementById("createAccountBtn");
-const switchAccountBtn = document.getElementById("switchAccountBtn");
-
-// Modals
-const actionModal = document.getElementById("actionModal");
-const createAccountModal = document.getElementById("createAccountModal");
-const switchAccountModal = document.getElementById("switchAccountModal");
-const modalTitle = document.getElementById("modalTitle");
-const transferField = document.getElementById("transferField");
-const amountInput = document.getElementById("amountInput");
-const recipientInput = document.getElementById("recipientInput");
-const transactionForm = document.getElementById("transactionForm");
-const createAccountForm = document.getElementById("createAccountForm");
+/* ======== DOM REFS ======== */
+const $ = (id) => document.getElementById(id);
+const dom = {
+  balance: $("balanceDisplay"),
+  account: $("accountNumberDisplay"),
+  txns: $("transactionsList"),
+  welcome: $("welcomeMessage"),
+  summary: $("accountSummary"),
+  accountsList: $("accountsList"),
+  actionModal: $("actionModal"),
+  createModal: $("createAccountModal"),
+  switchModal: $("switchAccountModal"),
+  modalTitle: $("modalTitle"),
+  transferField: $("transferField"),
+  amount: $("amountInput"),
+  recipient: $("recipientInput"),
+  txForm: $("transactionForm"),
+  createForm: $("createAccountForm"),
+  switchList: $("switchAccountsList"),
+  toast: $("toast"),
+};
 
 let activeAction = null;
+let toastTimer = null;
 
-// ======================== HELPER FUNCTIONS ========================
-function formatCurrency(amount) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(amount);
+/* ======== HELPERS ======== */
+const fmt = (n) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(n);
+
+function showToast(msg, type = "success") {
+  const t = dom.toast;
+  t.textContent = msg;
+  t.className = "toast show " + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => (t.className = "toast"), 3000);
 }
 
-function showToast(message, type = "success") {
-  const toast = document.getElementById("toast");
-  toast.textContent = message;
-  toast.className = `toast show ${type}`;
-  setTimeout(() => {
-    toast.className = "toast";
-  }, 3000);
-}
-
-function updateBalanceUI() {
-  if (bank.currentAccount) {
-    balanceDisplay.textContent = formatCurrency(bank.currentAccount.balance);
-    const maskedNumber = "****" + bank.currentAccount.accountNumber.slice(-4);
-    accountNumberDisplay.innerHTML = `<i class="fas fa-qrcode"></i> <span>${maskedNumber}</span>`;
-    welcomeMessage.innerHTML = `<i class="fas fa-user-circle"></i> Welcome, ${bank.currentAccount.accountHolder}`;
+/* ======== RENDER ======== */
+function render() {
+  const acc = bank.current;
+  if (acc) {
+    dom.balance.textContent = fmt(acc.balance);
+    dom.account.innerHTML = `<span class="acct-dot"></span><span>****${acc.number.slice(-4)}</span>`;
+    dom.welcome.textContent = `Welcome, ${acc.holder}`;
   } else {
-    balanceDisplay.textContent = "$0.00";
-    accountNumberDisplay.innerHTML = `<i class="fas fa-qrcode"></i> <span>No Account</span>`;
-    welcomeMessage.innerHTML = `<i class="fas fa-user-circle"></i> Welcome to Goldtrust Bank`;
+    dom.balance.textContent = "$0.00";
+    dom.account.innerHTML = `<span class="acct-dot"></span><span>No Account</span>`;
+    dom.welcome.textContent = "Welcome to QUANTIO Bank";
   }
+  renderTxns();
+  renderAccounts();
 }
 
-function renderTransactions() {
-  if (!bank.currentAccount || bank.currentAccount.transactions.length === 0) {
-    transactionsList.innerHTML = `
-            <div class="empty-transaction">
-                <i class="fas fa-receipt"></i>
-                <p>No transactions yet</p>
-                <span>Use the actions above</span>
-            </div>
-        `;
+function renderTxns() {
+  const acc = bank.current;
+  if (!acc || acc.txns.length === 0) {
+    dom.txns.innerHTML =
+      '<div class="tx-empty"><p>No transactions yet</p><span>Deposit or transfer to get started</span></div>';
     return;
   }
 
-  const transactions = bank.currentAccount.getRecentTransactions(15);
-  transactionsList.innerHTML = transactions
-    .map((tx) => {
-      let amountClass = "amount-positive";
-      let sign = "+";
-      let borderType = "transaction-deposit";
-      let displayType = tx.type;
-
-      if (tx.type === "WITHDRAWAL") {
-        amountClass = "amount-negative";
+  dom.txns.innerHTML = acc
+    .recent(15)
+    .map((t) => {
+      let cls = "tx-credit", sign = "+";
+      let label = t.type;
+      if (t.type === "WITHDRAWAL") {
+        cls = "tx-debit";
         sign = "-";
-        borderType = "transaction-withdraw";
-      } else if (tx.type === "TRANSFER SENT") {
-        amountClass = "amount-negative";
+      } else if (t.type === "TRANSFER SENT") {
+        cls = "tx-debit";
         sign = "-";
-        borderType = "transaction-transfer-sent";
-        displayType = `Transfer to ${tx.relatedHolder || tx.relatedAccount}`;
-      } else if (tx.type === "TRANSFER RECEIVED") {
-        amountClass = "amount-positive";
-        sign = "+";
-        borderType = "transaction-transfer-received";
-        displayType = `Transfer from ${tx.relatedHolder || tx.relatedAccount}`;
-      } else if (tx.type === "INITIAL DEPOSIT") {
-        displayType = "Initial Deposit";
+        label = "To: " + (t.relatedHolder || t.related);
+      } else if (t.type === "TRANSFER RECEIVED") {
+        label = "From: " + (t.relatedHolder || t.related);
+      } else if (t.type === "INITIAL DEPOSIT") {
+        label = "Initial Deposit";
       }
-
-      const detailText = `${tx.dateString} at ${tx.timeString}`;
-
-      return `
-            <div class="transaction-item ${borderType}">
-                <div class="transaction-info">
-                    <div class="transaction-type">${displayType}</div>
-                    <div class="transaction-detail">${detailText}</div>
-                </div>
-                <div class="transaction-amount ${amountClass}">${sign}${formatCurrency(tx.amount)}</div>
-            </div>
-        `;
+      return (
+        '<div class="tx-item">' +
+        "<div>" +
+        '<div class="tx-label">' + label + "</div>" +
+        '<div class="tx-meta">' + t.date + " at " + t.time + "</div>" +
+        "</div>" +
+        '<div class="tx-amount ' + cls + '">' + sign + fmt(t.amount) + "</div>" +
+        "</div>"
+      );
     })
     .join("");
 }
 
-function updateAccountSummary() {
-  const allAccounts = bank.getAllAccounts();
-  if (allAccounts.length > 1) {
-    accountSummaryDiv.style.display = "block";
-    accountsListDiv.innerHTML = allAccounts
+function renderAccounts() {
+  const all = bank.all();
+  if (all.length > 1) {
+    dom.summary.hidden = false;
+    dom.accountsList.innerHTML = all
       .map(
-        (acc) => `
-            <div class="account-summary-item ${bank.currentAccount && acc.accountNumber === bank.currentAccount.accountNumber ? "active" : ""}" 
-                 onclick="switchToAccount('${acc.accountNumber}')">
-                <div class="account-summary-name">${acc.accountHolder}</div>
-                <div class="account-summary-number">${acc.accountNumber}</div>
-                <div class="account-summary-balance">${formatCurrency(acc.balance)}</div>
-            </div>
-        `,
+        (a) =>
+          '<div class="acc-card' +
+          (bank.current && a.number === bank.current.number ? " active" : "") +
+          '" data-switch="' +
+          a.number +
+          '">' +
+          '<div class="acc-name">' + a.holder + "</div>" +
+          '<div class="acc-number">' + a.number + "</div>" +
+          '<div class="acc-balance">' + fmt(a.balance) + "</div>" +
+          "</div>"
       )
       .join("");
   } else {
-    accountSummaryDiv.style.display = "none";
+    dom.summary.hidden = true;
   }
 }
 
-function switchToAccount(accountNumber) {
-  if (bank.switchAccount(accountNumber)) {
-    updateBalanceUI();
-    renderTransactions();
-    updateAccountSummary();
-    showToast(
-      `Switched to ${bank.currentAccount.accountHolder}'s account`,
-      "success",
-    );
-    closeAllModals();
-  }
-}
-
-function refreshUI() {
-  updateBalanceUI();
-  renderTransactions();
-  updateAccountSummary();
-}
-
-// ======================== TRANSACTION HANDLERS ========================
+/* ======== MODALS ======== */
 function openModal(action) {
   activeAction = action;
-  amountInput.value = "";
-  recipientInput.value = "";
-
+  dom.amount.value = "";
+  dom.recipient.value = "";
   if (action === "transfer") {
-    modalTitle.innerText = "Send Money";
-    transferField.classList.remove("hidden");
-    recipientInput.required = true;
-    recipientInput.placeholder =
-      "Enter recipient account number (e.g., SB1234567890)";
-
-    // Show available accounts for transfer
-    const allAccounts = bank.getAllAccounts();
-    const otherAccounts = allAccounts.filter(
-      (acc) => acc.accountNumber !== bank.currentAccount?.accountNumber,
-    );
-
-    if (otherAccounts.length > 0) {
-      showToast(
-        `You have ${otherAccounts.length} other account(s) to transfer to`,
-        "success",
-      );
-    }
-  } else if (action === "deposit") {
-    modalTitle.innerText = "Add Funds";
-    transferField.classList.add("hidden");
-    recipientInput.required = false;
-  } else if (action === "withdraw") {
-    modalTitle.innerText = "Cash Withdrawal";
-    transferField.classList.add("hidden");
-    recipientInput.required = false;
+    dom.modalTitle.textContent = "Send Money";
+    dom.transferField.classList.remove("hidden");
+    dom.recipient.required = true;
+  } else {
+    dom.modalTitle.textContent = action === "deposit" ? "Deposit" : "Withdraw";
+    dom.transferField.classList.add("hidden");
+    dom.recipient.required = false;
   }
-  actionModal.style.display = "flex";
-  amountInput.focus();
+  dom.actionModal.style.display = "flex";
+  dom.amount.focus();
 }
 
-function closeAllModals() {
-  actionModal.style.display = "none";
-  createAccountModal.style.display = "none";
-  switchAccountModal.style.display = "none";
+function closeModals() {
+  dom.actionModal.style.display = "none";
+  dom.createModal.style.display = "none";
+  dom.switchModal.style.display = "none";
   activeAction = null;
 }
 
+/* ======== ACTIONS ======== */
 function handleConfirm() {
-  const amount = parseFloat(amountInput.value);
+  if (!activeAction) return;
+  const amount = parseFloat(dom.amount.value);
+  if (isNaN(amount) || amount <= 0) return showToast("Enter a valid amount", "error");
 
-  if (isNaN(amount) || amount <= 0) {
-    showToast("Please enter a valid amount greater than zero", "error");
-    return;
-  }
+  const acc = bank.current;
+  if (!acc) return showToast("No account selected", "error");
 
   try {
     if (activeAction === "deposit") {
-      const result = bank.currentAccount.deposit(amount);
-      showToast(result);
-      bank.saveToStorage();
-      refreshUI();
-      closeAllModals();
+      showToast(acc.deposit(amount));
     } else if (activeAction === "withdraw") {
-      const result = bank.currentAccount.withdraw(amount);
-      showToast(result);
-      bank.saveToStorage();
-      refreshUI();
-      closeAllModals();
+      showToast(acc.withdraw(amount));
     } else if (activeAction === "transfer") {
-      const recipientNumber = recipientInput.value.trim().toUpperCase();
-
-      if (!recipientNumber) {
-        showToast("Please enter recipient account number", "error");
-        return;
-      }
-
-      // Validate account number format
-      if (!recipientNumber.startsWith("SB")) {
-        showToast(
-          'Invalid account number format. Account numbers start with "SB"',
-          "error",
-        );
-        return;
-      }
-
-      const targetAccount = bank.findAccount(recipientNumber);
-
-      if (!targetAccount) {
-        // Show available accounts to help the user
-        const allAccounts = bank.getAllAccounts();
-        const otherAccounts = allAccounts.filter(
-          (acc) => acc.accountNumber !== bank.currentAccount?.accountNumber,
-        );
-
-        if (otherAccounts.length > 0) {
-          const accountList = otherAccounts
-            .map((acc) => `${acc.accountHolder} (${acc.accountNumber})`)
-            .join(", ");
-          showToast(
-            `Account not found! Available accounts: ${accountList}`,
-            "error",
-          );
-        } else {
-          showToast(
-            "Account not found! Create another account first to transfer money.",
-            "error",
-          );
-        }
-        return;
-      }
-
-      if (targetAccount.accountNumber === bank.currentAccount.accountNumber) {
-        showToast("Cannot transfer to your own account", "error");
-        return;
-      }
-
-      // Confirm transfer details
-      const confirmMessage = `Confirm transfer of ${formatCurrency(amount)} to ${targetAccount.accountHolder} (${targetAccount.accountNumber})?`;
-      if (confirm(confirmMessage)) {
-        const result = bank.currentAccount.transfer(amount, targetAccount);
-        showToast(result);
-        bank.saveToStorage();
-        refreshUI();
-        closeAllModals();
-      }
+      const num = dom.recipient.value.trim().toUpperCase();
+      if (!num || !num.startsWith("SB"))
+        return showToast("Enter a valid account number (SB...)", "error");
+      const target = bank.find(num);
+      if (!target) return showToast("Account not found", "error");
+      if (target.number === acc.number) return showToast("Cannot transfer to yourself", "error");
+      showToast(acc.transfer(amount, target));
     }
-  } catch (error) {
-    showToast(error.message, "error");
+    bank._save();
+    render();
+    closeModals();
+  } catch (e) {
+    showToast(e.message, "error");
   }
 }
 
-function handleCreateAccount(e) {
+function handleCreate(e) {
   e.preventDefault();
-  const accountHolder = document
-    .getElementById("newAccountHolder")
-    .value.trim();
-  const initialDeposit =
-    parseFloat(document.getElementById("initialDeposit").value) || 0;
-
-  if (!accountHolder) {
-    showToast("Please enter account holder name", "error");
-    return;
-  }
-
+  const name = document.getElementById("newAccountHolder").value.trim();
+  const deposit = parseFloat(document.getElementById("initialDeposit").value) || 0;
+  if (!name) return showToast("Enter account holder name", "error");
   try {
-    const newAccount = bank.createAccount(accountHolder, initialDeposit);
-    showToast(
-      `Account created successfully! Account Number: ${newAccount.accountNumber}`,
-      "success",
-    );
+    const a = bank.create(name, deposit);
+    showToast("Account opened for " + a.holder + " (" + a.number + ")");
     document.getElementById("createAccountForm").reset();
-    createAccountModal.style.display = "none";
-    refreshUI();
-  } catch (error) {
-    showToast(error.message, "error");
+    dom.createModal.style.display = "none";
+    render();
+  } catch (e) {
+    showToast(e.message, "error");
   }
 }
 
 function handleReset() {
-  if (
-    confirm(
-      "⚠️ WARNING: This will reset ALL transactions and restore the default balance ($1,247.89). This action cannot be undone. Are you sure?",
-    )
-  ) {
-    bank.resetCurrentAccount();
-    refreshUI();
-    showToast("Account has been reset to default state", "success");
+  if (confirm("Reset account to $1,247.89? This will clear all transactions.")) {
+    bank.resetCurrent();
+    render();
+    showToast("Account has been reset");
   }
 }
 
-function showSwitchAccountModal() {
-  const allAccounts = bank.getAllAccounts();
-  if (allAccounts.length <= 1) {
-    showToast("Only one account exists. Create more accounts first!", "error");
+function showSwitch() {
+  const all = bank.all();
+  if (all.length <= 1) return showToast("Create another account first", "error");
+  dom.switchList.innerHTML = all
+    .map(
+      (a) =>
+        '<div class="switch-item" data-switch="' +
+        a.number +
+        '">' +
+        "<div>" +
+        '<div style="font-weight:600;font-size:0.88rem">' + a.holder + "</div>" +
+        '<div style="font-size:0.68rem;color:#a0aec0">' + a.number + "</div>" +
+        "</div>" +
+        '<div style="font-weight:700;color:#2f855a">' + fmt(a.balance) + "</div>" +
+        "</div>"
+    )
+    .join("");
+  dom.switchModal.style.display = "flex";
+}
+
+function switchTo(num) {
+  if (bank.switchTo(num)) {
+    render();
+    showToast("Switched to " + bank.current.holder);
+    closeModals();
+  }
+}
+
+/* ======== EVENT DELEGATION ======== */
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-switch]");
+  if (t) {
+    switchTo(t.dataset.switch);
     return;
   }
 
-  const switchList = document.getElementById("switchAccountsList");
-  switchList.innerHTML = allAccounts
-    .map(
-      (acc) => `
-        <div class="switch-account-item" onclick="switchToAccount('${acc.accountNumber}')">
-            <div class="switch-account-info">
-                <div class="switch-account-name">${acc.accountHolder}</div>
-                <div class="switch-account-number">${acc.accountNumber}</div>
-            </div>
-            <div class="switch-account-balance">${formatCurrency(acc.balance)}</div>
-        </div>
-    `,
-    )
-    .join("");
-
-  switchAccountModal.style.display = "flex";
-}
-
-// ======================== DEMO: Create a second account for testing ========================
-function createDemoAccount() {
-  const allAccounts = bank.getAllAccounts();
-  if (allAccounts.length === 1) {
-    // Create a second account for demo purposes
-    try {
-      const demoAccount = bank.createAccount("Jane Smith", 500.0);
-      console.log("Demo account created:", demoAccount.accountNumber);
-      refreshUI();
-    } catch (error) {
-      // Account might already exist
-      console.log("Demo account already exists or error:", error.message);
-    }
+  switch (e.target.id) {
+    case "depositBtn":
+      openModal("deposit");
+      break;
+    case "withdrawBtn":
+      openModal("withdraw");
+      break;
+    case "transferBtn":
+      openModal("transfer");
+      break;
+    case "resetBtn":
+      handleReset();
+      break;
+    case "createAccountBtn":
+      dom.createModal.style.display = "flex";
+      break;
+    case "switchAccountBtn":
+      showSwitch();
+      break;
+    case "closeModalBtn":
+    case "cancelModalBtn":
+    case "cancelCreateBtn":
+    case "cancelSwitchBtn":
+      closeModals();
+      break;
   }
-}
 
-// ======================== EVENT LISTENERS ========================
-depositBtn.addEventListener("click", () => openModal("deposit"));
-withdrawBtn.addEventListener("click", () => openModal("withdraw"));
-transferBtn.addEventListener("click", () => openModal("transfer"));
-resetBtn.addEventListener("click", handleReset);
-createAccountBtn.addEventListener(
-  "click",
-  () => (createAccountModal.style.display = "flex"),
-);
-switchAccountBtn.addEventListener("click", showSwitchAccountModal);
-
-// Modal close buttons
-document
-  .querySelectorAll(
-    ".close-modal, #cancelModalBtn, #cancelCreateBtn, #cancelSwitchBtn",
-  )
-  .forEach((btn) => {
-    btn.addEventListener("click", closeAllModals);
-  });
-
-document.querySelectorAll(".close-create, .close-switch").forEach((btn) => {
-  btn.addEventListener("click", closeAllModals);
+  if (
+    e.target.classList.contains("modal-overlay") ||
+    e.target.classList.contains("modal-x") ||
+    e.target.classList.contains("close-create") ||
+    e.target.classList.contains("close-switch")
+  ) {
+    closeModals();
+  }
 });
 
-// Form submissions
-transactionForm.addEventListener("submit", (e) => {
+/* ======== FORM SUBMITS ======== */
+dom.txForm.addEventListener("submit", (e) => {
   e.preventDefault();
   handleConfirm();
 });
+dom.createForm.addEventListener("submit", handleCreate);
 
-createAccountForm.addEventListener("submit", handleCreateAccount);
-
-// Click outside modal to close
-window.addEventListener("click", (e) => {
-  if (e.target === actionModal) closeAllModals();
-  if (e.target === createAccountModal) closeAllModals();
-  if (e.target === switchAccountModal) closeAllModals();
+/* ======== KEYBOARD ======== */
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeModals();
 });
 
-// Make switchToAccount available globally
-window.switchToAccount = switchToAccount;
+/* ======== STARTUP ======== */
+render();
 
-// ======================== INITIALIZE ========================
-refreshUI();
-
-// Create demo account for testing transfers
-setTimeout(() => {
-  createDemoAccount();
-  refreshUI();
-  if (bank.getAllAccounts().length > 1) {
-    showToast(
-      "💡 Tip: You can now transfer money between accounts!",
-      "success",
-    );
+requestAnimationFrame(() => {
+  if (bank.all().length === 1) {
+    try {
+      bank.create("Jane Smith", 500);
+      render();
+    } catch (_) {}
   }
-}, 500);
+});
