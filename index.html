@@ -1,172 +1,548 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>QUANTIO Bank | Online Banking</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="style.css" />
-</head>
-<body>
-<div class="app">
-  <header class="header" id="top">
-    <div class="header-inner">
-      <div class="logo">
-        <svg viewBox="0 0 28 28" width="28" height="28" aria-hidden="true">
-          <rect x="2" y="8" width="24" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/>
-          <rect x="6" y="12" width="4" height="8" rx="1" fill="currentColor" opacity="0.5"/>
-          <rect x="12" y="12" width="4" height="8" rx="1" fill="currentColor" opacity="0.5"/>
-          <rect x="18" y="12" width="4" height="8" rx="1" fill="currentColor" opacity="0.5"/>
-          <rect x="3" y="3" width="22" height="3" rx="1" fill="currentColor" opacity="0.2"/>
-        </svg>
-        <span>QUANTIO <span class="logo-light">Bank</span></span>
-      </div>
-      <div class="header-badge">FDIC Insured</div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QUANTIO Bank | Online Banking</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,300&family=DM+Serif+Display:ital@0;1&family=JetBrains+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <!-- Header -->
+      <header class="header" id="top" role="banner">
+        <div class="header-inner">
+          <div class="logo" aria-label="QUANTIO Bank">
+            <div class="logo-mark" aria-hidden="true">
+              <svg
+                viewBox="0 0 32 32"
+                width="32"
+                height="32"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <rect
+                  x="3"
+                  y="9"
+                  width="26"
+                  height="18"
+                  rx="3"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                />
+                <rect
+                  x="7"
+                  y="13"
+                  width="4"
+                  height="9"
+                  rx="1"
+                  fill="currentColor"
+                  opacity="0.45"
+                />
+                <rect
+                  x="14"
+                  y="13"
+                  width="4"
+                  height="9"
+                  rx="1"
+                  fill="currentColor"
+                  opacity="0.45"
+                />
+                <rect
+                  x="21"
+                  y="13"
+                  width="4"
+                  height="9"
+                  rx="1"
+                  fill="currentColor"
+                  opacity="0.45"
+                />
+                <rect
+                  x="4"
+                  y="4"
+                  width="24"
+                  height="3.5"
+                  rx="1.2"
+                  fill="currentColor"
+                  opacity="0.18"
+                />
+              </svg>
+            </div>
+            <div class="logo-text">
+              <span class="logo-name">QUANTIO</span>
+              <span class="logo-sub">Bank</span>
+            </div>
+          </div>
+          <div class="header-right">
+            <div class="header-badge" aria-label="FDIC Insured">
+              <span class="badge-dot" aria-hidden="true"></span>
+              FDIC Insured
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main role="main">
+        <!-- Welcome bar -->
+        <div class="welcome-bar" id="welcomeBar">
+          <div class="welcome-info">
+            <div class="welcome-avatar" aria-hidden="true" id="welcomeAvatar">
+              J
+            </div>
+            <span id="welcomeMessage">Welcome to QUANTIO Bank</span>
+          </div>
+          <button
+            class="btn btn-ghost btn-sm"
+            id="switchAccountBtn"
+            aria-label="Switch account"
+          >
+            <svg
+              viewBox="0 0 16 16"
+              width="14"
+              height="14"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M2 5h12M2 11h12M10 2l3 3-3 3M6 14l-3-3 3-3"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            Switch Account
+          </button>
+        </div>
+
+        <!-- Main grid -->
+        <div class="main-grid">
+          <!-- Account card -->
+          <section
+            class="panel account-panel"
+            aria-labelledby="accountPanelTitle"
+          >
+            <div class="panel-header">
+              <svg
+                viewBox="0 0 18 18"
+                width="15"
+                height="15"
+                fill="none"
+                aria-hidden="true"
+              >
+                <rect
+                  x="1"
+                  y="3"
+                  width="16"
+                  height="12"
+                  rx="2.5"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                />
+                <rect
+                  x="4"
+                  y="7.5"
+                  width="2.5"
+                  height="3.5"
+                  rx="0.5"
+                  fill="currentColor"
+                  opacity="0.45"
+                />
+                <rect
+                  x="7.75"
+                  y="7.5"
+                  width="2.5"
+                  height="3.5"
+                  rx="0.5"
+                  fill="currentColor"
+                  opacity="0.45"
+                />
+                <rect
+                  x="11.5"
+                  y="7.5"
+                  width="2.5"
+                  height="3.5"
+                  rx="0.5"
+                  fill="currentColor"
+                  opacity="0.45"
+                />
+              </svg>
+              <h2 id="accountPanelTitle">My Account</h2>
+            </div>
+
+            <div
+              class="balance-card"
+              role="region"
+              aria-label="Account balance"
+            >
+              <div class="balance-card-inner">
+                <div class="balance-label">Available Balance</div>
+                <div
+                  class="balance-amount"
+                  id="balanceDisplay"
+                  aria-live="polite"
+                >
+                  $0.00
+                </div>
+                <div class="balance-footer">
+                  <div class="account-num" id="accountNumberDisplay">
+                    <span class="status-dot" aria-hidden="true"></span>
+                    <span class="account-num-text">No Account</span>
+                  </div>
+                  <div class="balance-card-logo" aria-hidden="true">Q</div>
+                </div>
+              </div>
+              <div class="balance-card-shimmer" aria-hidden="true"></div>
+            </div>
+
+            <div class="action-row" role="group" aria-label="Account actions">
+              <button class="btn btn-primary" id="depositBtn">
+                <svg
+                  viewBox="0 0 16 16"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M8 3v10M3 8l5 5 5-5"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                Deposit
+              </button>
+              <button class="btn btn-secondary" id="withdrawBtn">
+                <svg
+                  viewBox="0 0 16 16"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M8 13V3M3 8l5-5 5 5"
+                    stroke="currentColor"
+                    stroke-width="1.6"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                Withdraw
+              </button>
+              <button class="btn btn-secondary" id="transferBtn">
+                <svg
+                  viewBox="0 0 16 16"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M3 5h10M10 2l3 3-3 3M13 11H3M6 8l-3 3 3 3"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                Transfer
+              </button>
+            </div>
+
+            <button class="btn btn-open-account" id="createAccountBtn">
+              <svg
+                viewBox="0 0 16 16"
+                width="13"
+                height="13"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M8 3v10M3 8h10"
+                  stroke="currentColor"
+                  stroke-width="1.8"
+                  stroke-linecap="round"
+                />
+              </svg>
+              Open New Account
+            </button>
+          </section>
+
+          <!-- Transactions panel -->
+          <section class="panel tx-panel" aria-labelledby="txPanelTitle">
+            <div class="panel-header">
+              <svg
+                viewBox="0 0 18 18"
+                width="15"
+                height="15"
+                fill="none"
+                aria-hidden="true"
+              >
+                <rect
+                  x="2"
+                  y="2"
+                  width="14"
+                  height="14"
+                  rx="2.5"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                />
+                <path
+                  d="M5.5 9l2.5 2.5 4.5-5"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              <h2 id="txPanelTitle">Activity</h2>
+              <button
+                class="btn btn-link btn-sm"
+                id="resetBtn"
+                aria-label="Reset account to default state"
+              >
+                Reset
+              </button>
+            </div>
+            <div
+              class="tx-list"
+              id="transactionsList"
+              role="list"
+              aria-label="Transaction history"
+              aria-live="polite"
+            >
+              <div class="tx-empty">
+                <div class="tx-empty-icon" aria-hidden="true">
+                  <svg viewBox="0 0 40 40" width="40" height="40" fill="none">
+                    <rect
+                      x="6"
+                      y="10"
+                      width="28"
+                      height="22"
+                      rx="4"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      opacity="0.3"
+                    />
+                    <path
+                      d="M12 18h16M12 23h10"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      opacity="0.3"
+                    />
+                  </svg>
+                </div>
+                <p>No transactions yet</p>
+                <span>Deposit or transfer to get started</span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <!-- Accounts bar -->
+        <div
+          class="accounts-bar"
+          id="accountSummary"
+          hidden
+          aria-label="All accounts"
+        >
+          <div class="accounts-bar-header">
+            <h3>Your Accounts</h3>
+            <span class="accounts-count" id="accountsCount"></span>
+          </div>
+          <div class="accounts-row" id="accountsList"></div>
+        </div>
+      </main>
+
+      <footer class="footer" role="contentinfo">
+        <div class="footer-inner">
+          <div class="footer-logo" aria-hidden="true">Q</div>
+          <p>
+            &copy; 2025 QUANTIO Bank, N.A. &mdash; Member FDIC. All rights
+            reserved.
+          </p>
+        </div>
+      </footer>
     </div>
-  </header>
 
-  <main>
-  <div class="welcome" id="welcomeBar">
-    <div class="welcome-left">
-      <svg viewBox="0 0 18 18" width="16" height="16" aria-hidden="true">
-        <circle cx="9" cy="6" r="3" fill="currentColor" opacity="0.6"/>
-        <path d="M2 16c0-4 3.5-6 7-6s7 2 7 6" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.6"/>
-      </svg>
-      <span id="welcomeMessage">Welcome to QUANTIO Bank</span>
-    </div>
-    <button class="btn btn-outline btn-sm" id="switchAccountBtn">Switch Account</button>
-  </div>
+    <!-- ===== MODALS ===== -->
 
-  <div class="grid">
-    <section class="card">
-      <div class="card-title">
-        <svg viewBox="0 0 18 18" width="16" height="16" aria-hidden="true">
-          <rect x="1" y="3" width="16" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
-          <rect x="4" y="7" width="3" height="4" rx="0.5" fill="currentColor" opacity="0.4"/>
-          <rect x="9" y="7" width="3" height="4" rx="0.5" fill="currentColor" opacity="0.4"/>
-          <rect x="14" y="7" width="3" height="4" rx="0.5" fill="currentColor" opacity="0.4"/>
-        </svg>
-        <h2>My Account</h2>
-      </div>
-
-      <div class="balance-card">
-        <span class="balance-label">Available Balance</span>
-        <div class="balance-amount" id="balanceDisplay">$0.00</div>
-        <div class="account-num" id="accountNumberDisplay">
-          <span class="acct-dot"></span>
-          <span>No Account</span>
+    <!-- Transaction modal -->
+    <div
+      class="modal-overlay"
+      id="actionModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="modalTitle"
+    >
+      <div class="modal">
+        <div class="modal-head">
+          <h3 id="modalTitle">Transaction</h3>
+          <button
+            type="button"
+            class="modal-close"
+            id="closeModalBtn"
+            aria-label="Close dialog"
+          >
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="transactionForm" novalidate>
+            <div class="field">
+              <label for="amountInput">Amount</label>
+              <div class="input-wrap">
+                <span class="input-prefix" aria-hidden="true">$</span>
+                <input
+                  type="number"
+                  id="amountInput"
+                  placeholder="0.00"
+                  step="0.01"
+                  min="0.01"
+                  required
+                  autocomplete="off"
+                  aria-required="true"
+                />
+              </div>
+            </div>
+            <div class="field" id="transferField" hidden>
+              <label for="recipientInput">Recipient Account Number</label>
+              <input
+                type="text"
+                id="recipientInput"
+                placeholder="e.g. SB1234567890"
+                autocomplete="off"
+                spellcheck="false"
+              />
+            </div>
+            <div class="modal-actions">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                id="cancelModalBtn"
+              >
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-primary">Confirm</button>
+            </div>
+          </form>
         </div>
       </div>
+    </div>
 
-      <div class="action-row">
-        <button class="btn btn-primary" id="depositBtn">Deposit</button>
-        <button class="btn btn-outline" id="withdrawBtn">Withdraw</button>
-        <button class="btn btn-outline" id="transferBtn">Transfer</button>
-      </div>
-
-      <button class="btn btn-link" id="createAccountBtn">+ Open New Account</button>
-    </section>
-
-    <section class="card">
-      <div class="card-title">
-        <svg viewBox="0 0 18 18" width="16" height="16" aria-hidden="true">
-          <rect x="2" y="2" width="14" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.5"/>
-          <path d="M6 9l2 2 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-        <h2>Transactions</h2>
-        <button class="btn btn-text btn-sm" id="resetBtn">Reset</button>
-      </div>
-      <div class="tx-list" id="transactionsList">
-        <div class="tx-empty">
-          <p>No transactions yet</p>
-          <span>Deposit or transfer to get started</span>
+    <!-- Create account modal -->
+    <div
+      class="modal-overlay"
+      id="createAccountModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="createModalTitle"
+    >
+      <div class="modal">
+        <div class="modal-head">
+          <h3 id="createModalTitle">Open New Account</h3>
+          <button
+            type="button"
+            class="modal-close close-create"
+            aria-label="Close dialog"
+          >
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <form id="createAccountForm" novalidate>
+            <div class="field">
+              <label for="newAccountHolder">Account Holder Name</label>
+              <input
+                type="text"
+                id="newAccountHolder"
+                placeholder="Full legal name"
+                required
+                autocomplete="off"
+                aria-required="true"
+              />
+            </div>
+            <div class="field">
+              <label for="initialDeposit"
+                >Initial Deposit
+                <span class="field-optional">(optional)</span></label
+              >
+              <div class="input-wrap">
+                <span class="input-prefix" aria-hidden="true">$</span>
+                <input
+                  type="number"
+                  id="initialDeposit"
+                  step="0.01"
+                  min="0"
+                  value="0"
+                  placeholder="0.00"
+                  autocomplete="off"
+                />
+              </div>
+            </div>
+            <div class="modal-actions">
+              <button
+                type="button"
+                class="btn btn-secondary"
+                id="cancelCreateBtn"
+              >
+                Cancel
+              </button>
+              <button type="submit" class="btn btn-primary">
+                Open Account
+              </button>
+            </div>
+          </form>
         </div>
       </div>
-    </section>
-  </div>
-
-  <div class="accounts-bar" id="accountSummary" hidden>
-    <h3>Your Accounts</h3>
-    <div class="accounts-row" id="accountsList"></div>
-  </div>
-
-  </main>
-
-  <footer class="footer">
-    <p>&copy; 2025 QUANTIO Bank, N.A. &mdash; Member FDIC</p>
-  </footer>
-</div>
-
-<!-- Modals -->
-<div class="modal-overlay" id="actionModal">
-  <div class="modal">
-    <div class="modal-head">
-      <h3 id="modalTitle">Transaction</h3>
-      <button type="button" class="modal-x" id="closeModalBtn" aria-label="Close">&times;</button>
     </div>
-    <form id="transactionForm">
-      <div class="field">
-        <label for="amountInput">Amount</label>
-        <div class="input-group">
-          <span class="input-symbol">$</span>
-          <input type="number" id="amountInput" placeholder="0.00" step="0.01" min="0.01" required autocomplete="off" />
+
+    <!-- Switch account modal -->
+    <div
+      class="modal-overlay"
+      id="switchAccountModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="switchModalTitle"
+    >
+      <div class="modal">
+        <div class="modal-head">
+          <h3 id="switchModalTitle">Switch Account</h3>
+          <button
+            type="button"
+            class="modal-close close-switch"
+            aria-label="Close dialog"
+          >
+            &times;
+          </button>
+        </div>
+        <div class="switch-list" id="switchAccountsList" role="list"></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelSwitchBtn">
+            Cancel
+          </button>
         </div>
       </div>
-      <div class="field hidden" id="transferField">
-        <label for="recipientInput">Recipient Account Number</label>
-        <input type="text" id="recipientInput" placeholder="e.g. SB1234567890" autocomplete="off" />
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="btn btn-outline" id="cancelModalBtn">Cancel</button>
-        <button type="submit" class="btn btn-primary">Confirm</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-<div class="modal-overlay" id="createAccountModal">
-  <div class="modal">
-    <div class="modal-head">
-      <h3>Open New Account</h3>
-      <button type="button" class="modal-x close-create" aria-label="Close">&times;</button>
     </div>
-    <form id="createAccountForm">
-      <div class="field">
-        <label for="newAccountHolder">Account Holder</label>
-        <input type="text" id="newAccountHolder" placeholder="Full name" required autocomplete="off" />
-      </div>
-      <div class="field">
-        <label for="initialDeposit">Initial Deposit</label>
-        <div class="input-group">
-          <span class="input-symbol">$</span>
-          <input type="number" id="initialDeposit" step="0.01" min="0" value="0" placeholder="0.00" autocomplete="off" />
-        </div>
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="btn btn-outline" id="cancelCreateBtn">Cancel</button>
-        <button type="submit" class="btn btn-primary">Open Account</button>
-      </div>
-    </form>
-  </div>
-</div>
 
-<div class="modal-overlay" id="switchAccountModal">
-  <div class="modal">
-    <div class="modal-head">
-      <h3>Switch Account</h3>
-      <button type="button" class="modal-x close-switch" aria-label="Close">&times;</button>
-    </div>
-    <div class="switch-list" id="switchAccountsList"></div>
-    <div class="modal-actions switch-actions">
-      <button type="button" class="btn btn-outline" id="cancelSwitchBtn">Cancel</button>
-    </div>
-  </div>
-</div>
+    <!-- Toast -->
+    <div
+      id="toast"
+      class="toast"
+      role="alert"
+      aria-live="assertive"
+      aria-atomic="true"
+    ></div>
 
-<div id="toast" class="toast" role="alert" aria-live="polite"></div>
-
-<script src="script.js"></script>
-</body>
+    <script src="script.js"></script>
+  </body>
 </html>
